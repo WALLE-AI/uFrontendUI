@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 uBidBuddy
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -60,10 +60,18 @@ interface AutoUpdateCheckParams {
   includePrerelease?: boolean;
 }
 
-const DEFAULT_REPO = 'iOfficeAI/AionUi';
-const DEFAULT_USER_AGENT = 'AionUi';
+// No uBidBuddy update feed/repo configured yet — left blank rather than
+// pointing at the old upstream project's infrastructure. The CDN manifest
+// fetch below fails cleanly (caught, surfaced as "check failed") until these
+// are filled in.
+const DEFAULT_REPO = '';
+const DEFAULT_USER_AGENT = 'uBidBuddy';
 const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rpm']);
-const CDN_HOST = 'static.aionui.com';
+// `.invalid` is the IANA-reserved TLD for exactly this case — guaranteed
+// never to resolve — so `new URL()` calls against it stay well-formed instead
+// of throwing, while the manifest fetch still fails cleanly (caught, surfaced
+// as "check failed").
+const CDN_HOST = 'update.ubidbuddy.invalid';
 const CDN_BASE_URL = `https://${CDN_HOST}/releases`;
 const ALLOWED_DOWNLOAD_HOSTS = new Set<string>([
   CDN_HOST,
@@ -262,7 +270,7 @@ export const mapCdnManifestToRelease = (manifest: CdnLatestManifest, repo: strin
 };
 
 const resolveRepo = (requestRepo?: string): string => {
-  const envRepo = process.env.AIONUI_GITHUB_REPO?.trim();
+  const envRepo = process.env.UBIDBUDDY_GITHUB_REPO?.trim();
   const repo = (requestRepo || envRepo || DEFAULT_REPO).trim();
   return repo || DEFAULT_REPO;
 };
@@ -431,7 +439,7 @@ const sanitizeFileName = (name: string): string => {
   // Keep only base name and trim weird whitespace.
   const base = path.basename(name).trim();
   // Avoid empty names.
-  return base || `AionUi-update-${Date.now()}`;
+  return base || `uBidBuddy-update-${Date.now()}`;
 };
 
 const ensureUniquePath = (target: string): string => {

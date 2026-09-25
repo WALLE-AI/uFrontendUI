@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 uBidBuddy
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -29,7 +29,7 @@ import {
 } from './utils';
 import { BUILTIN_IMAGE_GEN_ID } from '../resources/builtinMcp/constants';
 
-// aionui-frontend has no legacy Electron-managed SQLite catalog to migrate
+// ubidbuddy-frontend has no legacy Electron-managed SQLite catalog to migrate
 // (that machinery lived under process/services/database/*, which pulled in a
 // native sqlite driver purely for pre-v26 desktop upgrades) — this is a fresh
 // project with no such installs, so migration is always a no-op here.
@@ -48,10 +48,10 @@ type ArchitectureType = 'x64' | 'arm64' | 'ia32' | 'arm';
 const nodePath = path;
 
 const STORAGE_PATH = {
-  config: 'aionui-config.txt',
-  chatMessage: 'aionui-chat-message.txt',
-  chat: 'aionui-chat.txt',
-  env: '.aionui-env',
+  config: 'ubidbuddy-config.txt',
+  chatMessage: 'ubidbuddy-chat-message.txt',
+  chat: 'ubidbuddy-chat.txt',
+  env: '.ubidbuddy-env',
   assistants: 'assistants',
   skills: 'skills',
   cronSkills: 'cron-skills',
@@ -82,7 +82,7 @@ const migrateLegacyData = async () => {
         try {
           return existsSync(newDir) && readdirSync(newDir).length === 0;
         } catch (error) {
-          console.warn('[AionUi] Warning: Could not read new directory during migration check:', error);
+          console.warn('[uBidBuddy] Warning: Could not read new directory during migration check:', error);
           return false; // 假设非空以避免迁移覆盖
         }
       })();
@@ -103,7 +103,7 @@ const migrateLegacyData = async () => {
           try {
             await fs.rm(oldDir, { recursive: true });
           } catch (cleanupError) {
-            console.warn('[AionUi] 原目录清理失败，请手动删除:', oldDir, cleanupError);
+            console.warn('[uBidBuddy] 原目录清理失败，请手动删除:', oldDir, cleanupError);
           }
         }
       }
@@ -111,7 +111,7 @@ const migrateLegacyData = async () => {
       return true;
     }
   } catch (error) {
-    console.error('[AionUi] 数据迁移失败:', error);
+    console.error('[uBidBuddy] 数据迁移失败:', error);
   }
 
   return false;
@@ -248,7 +248,7 @@ const JsonFileBuilder = <S extends object = Record<string, unknown>>(file_path: 
 
 const envFile = JsonFileBuilder<IEnvStorageRefer>(path.join(getHomePage(), STORAGE_PATH.env));
 
-const dirConfig = envFile.getSync('aionui.dir');
+const dirConfig = envFile.getSync('ubidbuddy.dir');
 
 const cacheDir = dirConfig?.cacheDir || getHomePage();
 
@@ -261,11 +261,11 @@ const _chatFile = JsonFileBuilder<IChatConversationRefer>(path.join(cacheDir, ST
 const chatFile = _chatFile;
 
 const buildMessageListStorage = (conversation_id: string, dir: string) => {
-  const fullName = path.join(dir, 'aionui-chat-history', conversation_id + '.txt');
+  const fullName = path.join(dir, 'ubidbuddy-chat-history', conversation_id + '.txt');
   if (!existsSync(fullName)) {
-    mkdirSync(path.join(dir, 'aionui-chat-history'));
+    mkdirSync(path.join(dir, 'ubidbuddy-chat-history'));
   }
-  return JsonFileBuilder<TMessage[]>(path.join(dir, 'aionui-chat-history', conversation_id + '.txt'));
+  return JsonFileBuilder<TMessage[]>(path.join(dir, 'ubidbuddy-chat-history', conversation_id + '.txt'));
 };
 
 const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string) => {
@@ -286,7 +286,7 @@ const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string)
     backup(conversation_id: string) {
       const storage = buildMessageListStorage(conversation_id, dir);
       return storage.backup(
-        path.join(dir, 'aionui-chat-history', 'backup', conversation_id + '_' + Date.now() + '.txt')
+        path.join(dir, 'ubidbuddy-chat-history', 'backup', conversation_id + '_' + Date.now() + '.txt')
       );
     },
   };
@@ -327,7 +327,7 @@ const cleanupLegacyBuiltinSkillsDir = () => {
   const legacyDir = path.join(cacheDir, LEGACY_BUILTIN_SKILLS_DIR);
   if (!existsSync(legacyDir)) return;
   fs.rm(legacyDir, { recursive: true, force: true })
-    .then(() => console.log('[AionUi] Cleaned up legacy builtin-skills cache'))
+    .then(() => console.log('[uBidBuddy] Cleaned up legacy builtin-skills cache'))
     .catch(() => {
       /* swallow — cleanup is not critical */
     });
@@ -377,7 +377,7 @@ const getBuiltinMcpScriptPath = (scriptName: string): string => {
 
 const initStorage = async () => {
   const t0 = performance.now();
-  const mark = (label: string) => console.log(`[AionUi:init] ${label} +${Math.round(performance.now() - t0)}ms`);
+  const mark = (label: string) => console.log(`[uBidBuddy:init] ${label} +${Math.round(performance.now() - t0)}ms`);
   mark('start');
 
   // 1. 先执行数据迁移（在任何目录创建之前）
@@ -405,7 +405,7 @@ const initStorage = async () => {
     await ensureAssistantDirs();
     mark('5. ensureAssistantDirs');
   } catch (error) {
-    console.error('[AionUi] Failed to ensure assistant dirs:', error);
+    console.error('[uBidBuddy] Failed to ensure assistant dirs:', error);
   }
 
   // 5b. Best-effort cleanup of the legacy builtin-skills cache left behind

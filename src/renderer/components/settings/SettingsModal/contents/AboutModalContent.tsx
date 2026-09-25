@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 uBidBuddy
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { Divider, Typography, Button, Switch, Message } from '@arco-design/web-react';
-import { Github, Right } from '@icon-park/react';
+import { Right } from '@icon-park/react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
@@ -15,8 +15,6 @@ import FeedbackReportModal from './FeedbackReportModal';
 import { ipcBridge } from '@/common';
 import { getIncludePrerelease, runUpdateCheck } from '@/renderer/components/settings/checkForUpdatesShared';
 import { UPDATE_AVAILABLE_EVENT } from '@/renderer/components/settings/useUpdateNotificationController';
-import { IS_DISCONTINUED_BUILD } from '@/renderer/utils/discontinuedBuild';
-import { OPEN_MIGRATION_DIALOG_EVENT } from '@/renderer/components/settings/UpdateMigrationDialog';
 import {
   getUpdateReadyState,
   setUpdateReadyState,
@@ -66,13 +64,6 @@ const AboutModalContent: React.FC = () => {
   };
 
   const checkUpdate = async () => {
-    // Discontinued build: guide to the AionPro website instead of any in-app
-    // version detection. Dead-branched out of normal builds by the flag.
-    if (IS_DISCONTINUED_BUILD) {
-      window.dispatchEvent(new CustomEvent(OPEN_MIGRATION_DIALOG_EVENT));
-      return;
-    }
-
     if (updateReadyState.ready) {
       if (updateReadyState.preparing) return;
       if (updateReadyState.filePath) {
@@ -111,16 +102,6 @@ const AboutModalContent: React.FC = () => {
 
   const linkItems: LinkItem[] = [
     {
-      title: t('settings.helpDocumentation'),
-      url: 'https://github.com/iOfficeAI/AionUi/wiki',
-      icon: <Right theme='outline' size='16' className='rtl-mirror' />,
-    },
-    {
-      title: t('settings.updateLog'),
-      url: 'https://github.com/iOfficeAI/AionUi/releases',
-      icon: <Right theme='outline' size='16' className='rtl-mirror' />,
-    },
-    {
       title: t('settings.bugReport'),
       onClick: () => setShowFeedbackModal(true),
       icon: <Right theme='outline' size='16' className='rtl-mirror' />,
@@ -128,11 +109,6 @@ const AboutModalContent: React.FC = () => {
     {
       title: t('settings.contactMe'),
       url: 'https://x.com/WailiVery',
-      icon: <Right theme='outline' size='16' className='rtl-mirror' />,
-    },
-    {
-      title: t('settings.officialWebsite'),
-      url: 'https://www.aionui.com',
       icon: <Right theme='outline' size='16' className='rtl-mirror' />,
     },
   ];
@@ -150,7 +126,7 @@ const AboutModalContent: React.FC = () => {
           {/* App Info Section */}
           <div className='flex flex-col items-center pb-24px'>
             <Typography.Title heading={3} className='text-24px font-bold text-t-primary mb-8px'>
-              AionUi
+              uBidBuddy
             </Typography.Title>
             <Typography.Text className='text-14px text-t-secondary mb-12px text-center'>
               {t('settings.appDescription')}
@@ -159,16 +135,6 @@ const AboutModalContent: React.FC = () => {
               <span className='px-10px py-4px rd-6px text-13px bg-fill-2 text-t-primary font-500'>
                 v{__APP_VERSION__}
               </span>
-              <div
-                className='text-t-primary cursor-pointer hover:text-t-secondary transition-colors p-4px'
-                onClick={() =>
-                  openLink('https://github.com/iOfficeAI/AionUi').catch((error) =>
-                    console.error('Failed to open link:', error)
-                  )
-                }
-              >
-                <Github theme='outline' size='20' />
-              </div>
             </div>
 
             {/* Check Update Section */}

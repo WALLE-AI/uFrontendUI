@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 uBidBuddy
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -21,12 +21,10 @@ import {
 } from './updateNotificationState';
 import { getIncludePrerelease, runUpdateCheck, type CheckUpdateOutcome } from './checkForUpdatesShared';
 import { setUpdateReadyState } from './updateReadyState';
-import { IS_DISCONTINUED_BUILD } from '@/renderer/utils/discontinuedBuild';
-import { OPEN_MIGRATION_DIALOG_EVENT } from './UpdateMigrationDialog';
 
 type AvailableOutcome = Extract<CheckUpdateOutcome, { kind: 'available' }>;
 
-export const UPDATE_AVAILABLE_EVENT = 'aionui-update-available';
+export const UPDATE_AVAILABLE_EVENT = 'ubidbuddy-update-available';
 
 declare const __APP_VERSION__: string;
 
@@ -59,7 +57,9 @@ const reduceNotificationState = (
   event: UpdateNotificationEvent
 ): UpdateNotificationState => updateNotificationReducer(current, event).state;
 
-const RELEASES_PAGE_URL = 'https://github.com/iOfficeAI/AionUi/releases';
+// No update feed/releases page of our own configured yet; left blank so the
+// "view releases" fallback link in the update-available card resolves to nothing.
+const RELEASES_PAGE_URL = '';
 
 const getVersionLabelFromState = (state: UpdateNotificationState): string =>
   state.updateInfo?.version || state.autoUpdateInfo?.version || '';
@@ -220,13 +220,6 @@ export const useUpdateNotificationController = () => {
 
   const openUpdateNotification = useCallback(
     (source: UpdateNotificationOpenSource, userInitiated: boolean) => {
-      // Discontinued build: every manual entry point (tray / menu / IPC-open)
-      // opens the migration card instead of checking. Flag is compile-time, so
-      // this branch is stripped from normal builds.
-      if (IS_DISCONTINUED_BUILD) {
-        window.dispatchEvent(new CustomEvent(OPEN_MIGRATION_DIALOG_EVENT));
-        return;
-      }
       const current = stateRef.current;
       dispatch({ type: 'openRequested', source, userInitiated });
       if (
@@ -248,7 +241,7 @@ export const useUpdateNotificationController = () => {
       const source = (evt as CustomEvent<{ source?: UpdateNotificationOpenSource }>).detail?.source ?? 'about';
       openUpdateNotification(source, true);
     };
-    window.addEventListener('aionui-open-update-modal', handleWindowOpen);
+    window.addEventListener('ubidbuddy-open-update-modal', handleWindowOpen);
 
     // The About button runs its own check and only reveals the card when an
     // update is actually available, handing over the already-fetched outcome.
@@ -262,7 +255,7 @@ export const useUpdateNotificationController = () => {
 
     return () => {
       removeOpenListener();
-      window.removeEventListener('aionui-open-update-modal', handleWindowOpen);
+      window.removeEventListener('ubidbuddy-open-update-modal', handleWindowOpen);
       window.removeEventListener(UPDATE_AVAILABLE_EVENT, handleAvailable);
     };
   }, [openUpdateNotification, presentAvailableOutcome]);

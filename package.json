@@ -1,15 +1,15 @@
 {
-  "name": "aionui-frontend",
+  "name": "ubidbuddy-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "AionUi frontend UI, extracted as a standalone Vite + React SPA (no Electron). Talks to a self-hosted backend over HTTP/WS.",
+  "description": "uBidBuddy frontend UI, extracted as a standalone Vite + React SPA (no Electron). Talks to a self-hosted backend over HTTP/WS.",
   "type": "module",
   "main": "./out/main/index.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "electron:dev": "cross-env AIONUI_DISABLE_AUTO_UPDATE=1 electron-vite dev --config electron.vite.config.ts",
+    "electron:dev": "electron-vite dev --config electron.vite.config.ts",
     "electron:build": "electron-vite build --config electron.vite.config.ts"
   },
   "dependencies": {

@@ -4,7 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type FeedbackEventTags, submitFeedbackReport } from '@/renderer/services/feedback/submitFeedbackReport';
 
-const AIONUI_DOWNLOAD_URL = 'https://www.aionui.com/';
+// No uBidBuddy download page configured yet — fill in once one exists. Left
+// blank rather than pointing at the old upstream project's site.
+const DOWNLOAD_LATEST_URL = '';
 const INSTALLATION_INTEGRITY_REPORT_FLUSH_TIMEOUT_MS = 2000;
 
 type InstallationIntegrityDialogKind =
@@ -35,7 +37,8 @@ export type InstallationIntegrityDiagnostics = {
 };
 
 export function openDownloadLatest(): void {
-  window.open(AIONUI_DOWNLOAD_URL, '_blank', 'noopener,noreferrer');
+  if (!DOWNLOAD_LATEST_URL) return;
+  window.open(DOWNLOAD_LATEST_URL, '_blank', 'noopener,noreferrer');
 }
 
 /**
@@ -163,7 +166,7 @@ export async function reportInstallationIntegrityDiagnostics(
     tags: buildInstallationIntegrityTags(diagnostics),
   });
 
-  if (typeof window !== 'undefined' && window.__aionuiE2ETest) {
+  if (typeof window !== 'undefined' && window.__ubidbuddyE2ETest) {
     window.__installationIntegrityReportCount = (window.__installationIntegrityReportCount ?? 0) + 1;
     window.__lastInstallationIntegrityReportMessage = 'installation-integrity-user-report';
   }

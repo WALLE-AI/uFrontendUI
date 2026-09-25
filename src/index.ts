@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 uBidBuddy
  * SPDX-License-Identifier: Apache-2.0
  *
- * Electron main process entry for aionui-frontend's desktop shell.
+ * Electron main process entry for ubidbuddy-frontend's desktop shell.
  *
- * This is a trimmed port of AionUi's own `packages/desktop/src/index.ts`:
+ * This is a trimmed port of uBidBuddy's own `packages/desktop/src/index.ts`:
  * window/tray/menu/zoom/bounds, deep links, single-instance lock, auto-update,
  * native dialogs, notifications, theme sync, feedback, and the desktop-pet
  * overlay are all kept. Everything about spawning/managing the aioncore
@@ -13,7 +13,7 @@
  * migrations/admin-user bootstrap, the CDP-bridge-for-agent-browser wiring,
  * reset-password CLI mode) and the webui-LAN-sharing bridge (which only makes
  * sense once an aioncore instance is already running) have been removed.
- * Crash reporting (Sentry) was dropped too — see aionui-frontend's port plan.
+ * Crash reporting (Sentry) was dropped too — see ubidbuddy-frontend's port plan.
  */
 
 // configureChromium sets app name (dev isolation) and Chromium flags — must run before
@@ -78,12 +78,12 @@ import electronSquirrelStartup from 'electron-squirrel-startup';
 // Acquire lock early so the second instance quits before doing unnecessary work.
 // When a second instance starts (e.g. from protocol URL), it sends its data
 // to the first instance via second-instance event, then quits.
-const isE2ETestMode = process.env.AIONUI_E2E_TEST === '1';
-const skipSingleInstanceLock = isE2ETestMode || process.env.AIONUI_MULTI_INSTANCE === '1';
+const isE2ETestMode = process.env.UBIDBUDDY_E2E_TEST === '1';
+const skipSingleInstanceLock = isE2ETestMode || process.env.UBIDBUDDY_MULTI_INSTANCE === '1';
 const deepLinkFromArgv = process.argv.find((arg) => arg.startsWith(`${PROTOCOL_SCHEME}://`));
 const gotTheLock = skipSingleInstanceLock ? true : app.requestSingleInstanceLock({ deepLinkUrl: deepLinkFromArgv });
 if (!gotTheLock) {
-  console.warn('[AionUi] Another instance is already running; current process will exit.');
+  console.warn('[uBidBuddy] Another instance is already running; current process will exit.');
   app.quit();
 } else {
   app.on('second-instance', (_event, argv, _workingDirectory, additionalData) => {
@@ -102,7 +102,7 @@ if (!gotTheLock) {
       showOrCreateMainWindow({
         mainWindow,
         createWindow: () => {
-          console.log('[AionUi] second-instance received with no active main window, recreating main window');
+          console.log('[uBidBuddy] second-instance received with no active main window, recreating main window');
           createWindow();
         },
       });
@@ -154,7 +154,7 @@ process.on('unhandledRejection', (reason, _promise) => {
 
 function logUncaught(diagnostics: UncaughtErrorDiagnostics): void {
   try {
-    console.error(`[AionUi] ${diagnostics.origin}:`, diagnostics);
+    console.error(`[uBidBuddy] ${diagnostics.origin}:`, diagnostics);
   } catch {
     // Logging must never escalate a swallowed error into a fatal one.
   }
@@ -168,12 +168,23 @@ let appReadyDone = false;
 
 let mainWindow: BrowserWindow;
 
-// No aioncore backend is spawned here. `AIONUI_BACKEND_PORT` lets a developer
+// No aioncore backend is spawned here. `UBIDBUDDY_BACKEND_PORT` lets a developer
 // point the renderer at an already-running backend (self-hosted aioncore, or
 // AionUi/packages/web-host); left unset, httpBridge.ts's own 13400 fallback
 // applies and API calls simply fail, which is expected without a backend.
 ipcMain.on('get-backend-port', (event) => {
-  event.returnValue = Number(process.env.AIONUI_BACKEND_PORT) || 0;
+  event.returnValue = Number(process.env.UBIDBUDDY_BACKEND_PORT) || 0;
+});
+
+// No backend process is spawned in this build, so it never "fails to start" —
+// these two report a permanent non-failure state. Without handlers, the
+// preload's sendSync calls block the renderer's main thread forever (no
+// listener means no reply), leaving the window blank and unresponsive.
+ipcMain.on('get-backend-startup-failed', (event) => {
+  event.returnValue = false;
+});
+ipcMain.on('get-backend-startup-failure', (event) => {
+  event.returnValue = null;
 });
 
 let rendererInitialLanguage: string | null = null;
@@ -182,7 +193,7 @@ ipcMain.on('get-initial-language', (event) => {
 });
 
 const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): void => {
-  console.log('[AionUi] Creating main window...');
+  console.log('[uBidBuddy] Creating main window...');
   const { x: windowX, y: windowY, width: windowWidth, height: windowHeight } = resolveInitialBounds();
 
   // Get app icon for development mode (Windows/Linux need icon in BrowserWindow)
@@ -226,23 +237,23 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
       webviewTag: true, // 启用 webview 标签用于 HTML 预览 / Enable webview tag for HTML preview
     },
   });
-  console.log(`[AionUi] Main window created (id=${mainWindow.id})`);
+  console.log(`[uBidBuddy] Main window created (id=${mainWindow.id})`);
 
   // Show window after content is ready to prevent FOUC (Flash of Unstyled Content)
   if (showOnReady) {
     const showWindow = () => {
       if (!mainWindow.isDestroyed() && !mainWindow.isVisible()) {
-        console.log('[AionUi] Showing main window');
+        console.log('[uBidBuddy] Showing main window');
         mainWindow.show();
         mainWindow.focus();
       }
     };
     mainWindow.once('ready-to-show', () => {
-      console.log('[AionUi] Window ready-to-show');
+      console.log('[uBidBuddy] Window ready-to-show');
       showWindow();
     });
     mainWindow.webContents.once('did-finish-load', () => {
-      console.log('[AionUi] Renderer did-finish-load');
+      console.log('[uBidBuddy] Renderer did-finish-load');
       showWindow();
     });
     // Fallback: show window after 5s even if events don't fire (e.g. loadURL failure)
@@ -260,54 +271,31 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   registerWindowMaximizeListeners(mainWindow);
   attachWindowBoundsPersistence(mainWindow, (bounds) => ProcessConfig.set('window.bounds', bounds));
 
-  // Initialize auto-updater service (skip when disabled via env, e.g. E2E / CI, or
-  // — for now — always, via AIONUI_DISABLE_AUTO_UPDATE=1 in the electron:dev
-  // script, since this project has no update feed of its own configured yet).
-  const isCiRuntime = process.env.CI === 'true' || process.env.CI === '1' || process.env.GITHUB_ACTIONS === 'true';
-  const disableAutoUpdater =
-    process.env.AIONUI_DISABLE_AUTO_UPDATE === '1' || process.env.AIONUI_E2E_TEST === '1' || isCiRuntime;
-  if (!disableAutoUpdater) {
-    Promise.all([import('./process/services/autoUpdaterService'), import('./process/bridge/updateBridge')])
-      .then(([{ autoUpdaterService }, { createAutoUpdateStatusBroadcast }]) => {
-        const statusBroadcast = createAutoUpdateStatusBroadcast();
-        autoUpdaterService.initialize(statusBroadcast);
-        autoUpdaterService.setBeforeQuitAndInstall(async () => {
-          // No backend subprocess to stop before installing an update.
-        });
-        if (!process.env.IS_DISCONTINUED_BUILD) {
-          setTimeout(() => {
-            void autoUpdaterService.checkForUpdatesAndNotify();
-          }, 3000);
-        }
-      })
-      .catch((error) => {
-        console.error('[App] Failed to initialize autoUpdaterService:', error);
-      });
-  } else {
-    console.log('[AionUi] Auto-updater disabled via env/CI guard');
-  }
+  // Auto-updater is always disabled: this project has no update feed of its
+  // own configured yet.
+  console.log('[uBidBuddy] Auto-updater disabled (no update feed configured)');
 
   // Load the renderer: dev server URL in development, built HTML file in production
   const rendererUrl = process.env['ELECTRON_RENDERER_URL'];
   const fallbackFile = path.join(__dirname, '../renderer/index.html');
 
   if (!app.isPackaged && rendererUrl) {
-    console.log(`[AionUi] Loading renderer URL: ${rendererUrl}`);
+    console.log(`[uBidBuddy] Loading renderer URL: ${rendererUrl}`);
     mainWindow.loadURL(rendererUrl).catch((error) => {
-      console.error('[AionUi] loadURL failed, falling back to file:', error.message || error);
+      console.error('[uBidBuddy] loadURL failed, falling back to file:', error.message || error);
       mainWindow.loadFile(fallbackFile).catch((e2) => {
-        console.error('[AionUi] loadFile fallback also failed:', e2.message || e2);
+        console.error('[uBidBuddy] loadFile fallback also failed:', e2.message || e2);
       });
     });
   } else {
-    console.log(`[AionUi] Loading renderer file: ${fallbackFile}`);
+    console.log(`[uBidBuddy] Loading renderer file: ${fallbackFile}`);
     mainWindow.loadFile(fallbackFile).catch((error) => {
-      console.error('[AionUi] loadFile failed:', error.message || error);
+      console.error('[uBidBuddy] loadFile failed:', error.message || error);
     });
   }
 
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
-    console.error('[AionUi] did-fail-load:', { errorCode, errorDescription, validatedURL, isMainFrame });
+    console.error('[uBidBuddy] did-fail-load:', { errorCode, errorDescription, validatedURL, isMainFrame });
   });
 
   // Recovery policy for renderer crashes: reload with backoff for ordinary
@@ -316,34 +304,34 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   const rendererRecovery = createRendererRecoveryPolicy();
 
   mainWindow.webContents.on('render-process-gone', (_event, details) => {
-    console.error('[AionUi] render-process-gone:', details);
+    console.error('[uBidBuddy] render-process-gone:', details);
     if (mainWindow.isDestroyed()) return;
 
     const action = rendererRecovery.onCrash(details.reason);
 
     if (action.kind === 'relaunch') {
-      console.warn(`[AionUi] renderer cannot be recovered in-place (reason=${details.reason}); relaunching app`);
+      console.warn(`[uBidBuddy] renderer cannot be recovered in-place (reason=${details.reason}); relaunching app`);
       app.relaunch();
       app.exit(0);
       return;
     }
 
     if (action.kind === 'give-up') {
-      console.error(`[AionUi] renderer recovery exhausted (reason=${details.reason}); not retrying`);
+      console.error(`[uBidBuddy] renderer recovery exhausted (reason=${details.reason}); not retrying`);
       return;
     }
 
     const reload = () => {
       if (mainWindow.isDestroyed()) return;
-      console.log('[AionUi] Attempting to recover from renderer crash by reloading...');
+      console.log('[uBidBuddy] Attempting to recover from renderer crash by reloading...');
 
       if (!app.isPackaged && rendererUrl) {
         mainWindow.loadURL(rendererUrl).catch((error) => {
-          console.error('[AionUi] Recovery loadURL failed:', error.message || error);
+          console.error('[uBidBuddy] Recovery loadURL failed:', error.message || error);
         });
       } else {
         mainWindow.loadFile(fallbackFile).catch((error) => {
-          console.error('[AionUi] Recovery loadFile failed:', error.message || error);
+          console.error('[uBidBuddy] Recovery loadFile failed:', error.message || error);
         });
       }
     };
@@ -356,11 +344,11 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   });
 
   mainWindow.webContents.on('unresponsive', () => {
-    console.warn('[AionUi] Renderer became unresponsive');
+    console.warn('[uBidBuddy] Renderer became unresponsive');
   });
 
   mainWindow.on('closed', () => {
-    console.log('[AionUi] Main window closed');
+    console.log('[uBidBuddy] Main window closed');
   });
 
   // Listen to DevTools state changes and notify Renderer
@@ -384,7 +372,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
 
 const handleAppReady = async (): Promise<void> => {
   const t0 = performance.now();
-  const mark = (label: string) => console.log(`[AionUi:ready] ${label} +${Math.round(performance.now() - t0)}ms`);
+  const mark = (label: string) => console.log(`[uBidBuddy:ready] ${label} +${Math.round(performance.now() - t0)}ms`);
   mark('start');
 
   if (!app.isPackaged) {
@@ -438,7 +426,7 @@ const handleAppReady = async (): Promise<void> => {
     initializeZoomFactor(await ProcessConfig.get('ui.zoomFactor'));
     mark('initializeZoomFactor');
   } catch (error) {
-    console.error('[AionUi] Failed to restore zoom factor:', error);
+    console.error('[uBidBuddy] Failed to restore zoom factor:', error);
     initializeZoomFactor(undefined);
   }
 
@@ -446,7 +434,7 @@ const handleAppReady = async (): Promise<void> => {
     loadSavedWindowBounds(await ProcessConfig.get('window.bounds'));
     mark('restoreWindowBounds');
   } catch (error) {
-    console.error('[AionUi] Failed to restore window bounds:', error);
+    console.error('[uBidBuddy] Failed to restore window bounds:', error);
     loadSavedWindowBounds(undefined);
   }
 
@@ -541,7 +529,7 @@ if (gotTheLock) {
     .whenReady()
     .then(handleAppReady)
     .catch((error) => {
-      console.error('[AionUi] App initialization failed:', error);
+      console.error('[uBidBuddy] App initialization failed:', error);
       app.quit();
     });
 }
@@ -594,9 +582,9 @@ installQuitCleanup({
 });
 
 app.on('will-quit', () => {
-  console.log('[AionUi] will-quit — all cleanup should be complete');
+  console.log('[uBidBuddy] will-quit — all cleanup should be complete');
 });
 
 app.on('quit', (_event, exitCode) => {
-  console.log(`[AionUi] quit (exitCode=${exitCode})`);
+  console.log(`[uBidBuddy] quit (exitCode=${exitCode})`);
 });

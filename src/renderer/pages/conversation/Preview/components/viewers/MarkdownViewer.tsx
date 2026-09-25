@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2025 uBidBuddy
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -358,7 +358,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
         ) : (
           // 预览模式：react-markdown + KaTeX / Preview mode: react-markdown + KaTeX
           <div
-            className='aionui-markdown'
+            className='ubidbuddy-markdown'
             style={{
               wordWrap: 'break-word',
               overflowWrap: 'break-word',

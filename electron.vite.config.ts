@@ -118,8 +118,14 @@ export default defineConfig(({ mode }) => {
       publicDir: resolve(__dirname, 'public'),
       appType: 'mpa',
       server: {
-        port: 5173,
+        port: 5174,
         hmr: { host: 'localhost' },
+        // Electron's navigation request for the initial document can hang forever
+        // ("Pending" in DevTools Network) when Vite answers with a 304 Not Modified
+        // for the main-frame request — the renderer never gets a body/completion
+        // event, so the page stays blank and webContents eventually fires
+        // 'unresponsive'. Forcing no-store sidesteps conditional-GET/304 entirely.
+        headers: { 'Cache-Control': 'no-store' },
       },
       resolve: {
         alias: {
